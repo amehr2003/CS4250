@@ -56,13 +56,12 @@ def createDocument(cur, docId, docText, docTitle, docDate, docCat):
     for i in newTerm:
         recset = [i]
         cur.execute(sql, recset)
-        if cur.fetchall():
-            hello = 0
-        else:
+        if not cur.fetchall():
             num_charTerm = len(i)
             sql2 = 'Insert into terms (term, numChars) Values (%s, %s)'
             recset = [i, num_charTerm]
             cur.execute(sql2, recset)
+            
     tc = {}
     for word in newTerm:
         if word in tc:
