@@ -9,62 +9,110 @@
 #IMPORTANT NOTE: DO NOT USE ANY ADVANCED PYTHON LIBRARY TO COMPLETE THIS CODE SUCH AS numpy OR pandas. You have to work here only with
 # standard arrays
 
-#importing some Python libraries
-# --> add your Python code here
+# importing some Python libraries
+import psycopg2
+from psycopg2.extras import RealDictCursor
+import re
 
 def connectDataBase():
-
     # Create a database connection object using psycopg2
-    # --> add your Python code here
+    DB_name = "corpus"
+    DB_user = "postgres"
+    DB_pass = "123"
+    DB_host = "localhost"
+    DB_port = "5432"
+    try:
+        connection = psycopg2.connect(database=DB_name, user=DB_user, password=DB_pass, host=DB_host, port=DB_port, cursor_factory=RealDictCursor)
+        return connection
+    except Exception as e:
+        print(f"Connection failed: {e}")
+        return None
 
-def createCategory(cur, cur, catId, catName):
-
-    # Insert a category in the database
-    # --> add your Python code here
+def createCategory(cur, catId, catName):
+    sql = "Insert into Category (id, name) Values (%s, %s)"
+    recset = [catId, catName]
+    cur.execute(sql, recset)
 
 def createDocument(cur, docId, docText, docTitle, docDate, docCat):
+    sql = 'Select id from Category where name = %s'
+    recset = [docCat]
+    cur.execute(sql, recset)
+    id = cur.fetchall()[0]["id"]
 
-    # 1 Get the category id based on the informed category name
-    # --> add your Python code here
+    sql = 'Select title from Documents'
+    recset = [docText]
+    cur.execute(sql, recset)
+    string = recset[0]
+    cstring = re.sub(r'[!.?\s]', '', string)
+    numChars = len(cstring)
 
-    # 2 Insert the document in the database. For num_chars, discard the spaces and punctuation marks.
-    # --> add your Python code here
+    sql = "Insert into Documents (docnum, text, title, numChars, date, category_id) Values (%s, %s, %s, %s, %s, %s)"
+    recset = [docId, docText, docTitle, numChars, docDate, id]
+    cur.execute(sql, recset)
 
-    # 3 Update the potential new terms.
-    # 3.1 Find all terms that belong to the document. Use space " " as the delimiter character for terms and Remember to lowercase terms and remove punctuation marks.
-    # 3.2 For each term identified, check if the term already exists in the database
-    # 3.3 In case the term does not exist, insert it into the database
-    # --> add your Python code here
+    cstring2 = re.sub(r'[?!.]', '', string)
+    newTerm = cstring2.lower().split()
+    sql = 'Select * from terms where term = %s'
+    for i in newTerm:
+        recset = [i]
+        cur.execute(sql, recset)
+        if cur.fetchall():
+            hello = 0
+        else:
+            num_charTerm = len(i)
+            sql2 = 'Insert into terms (term, numChars) Values (%s, %s)'
+            recset = [i, num_charTerm]
+            cur.execute(sql2, recset)
+    tc = {}
+    for word in newTerm:
+        if word in tc:
+            tc[word] += 1
+        else:
+            tc[word] = 1
 
-    # 4 Update the index
-    # 4.1 Find all terms that belong to the document
-    # 4.2 Create a data structure the stores how many times (count) each term appears in the document
-    # 4.3 Insert the term and its corresponding count into the database
-    # --> add your Python code here
-    #split based on delimiter
+    for term, count in tc.items():
+        newTerm = term
+        newCount = count
+        sql = 'Insert into Index (docNumber, term, count) Values (%s, %s, %s)'
+        recset = [docId, newTerm, newCount]
+        cur.execute(sql, recset)
+
 
 def deleteDocument(cur, docId):
+    sql = 'Select term from Index where docNumber = %s'
+    recset = [docId]
+    cur.execute(sql, recset)
+    test = cur.fetchall()
+    for term in test:
+        delete_term = term["term"]
+        sql2 = 'Delete from Index where term = %s'
+        recset = [delete_term]
+        cur.execute(sql2, recset)
 
-    # 1 Query the index based on the document to identify terms
-    # 1.1 For each term identified, delete its occurrences in the index for that document
-    # 1.2 Check if there are no more occurrences of the term in another document. If this happens, delete the term from the database.
-    # --> add your Python code here
+    sql = "Delete from Documents where docNumber = %(docId)s"
+    cur.execute(sql, {'docId': docId})
 
-    # 2 Delete the document from the database
-    # --> add your Python code here
-    # you can make a dictionary with a word and the definition being the count
 
 def updateDocument(cur, docId, docText, docTitle, docDate, docCat):
+    deleteDocument(cur, docId)
 
-    # 1 Delete the document
-    # --> add your Python code here
+    createDocument(cur, docId, docText, docTitle, docDate, docCat)
 
-    # 2 Create the document with the same id
-    # --> add your Python code here
 
 def getIndex(cur):
+    sql = 'SELECT Index.term, Documents.title, count(*) AS count FROM Index INNER JOIN Documents ON Index.docNumber = ' \
+          'Documents.docNumber GROUP BY term, title'
+    cur.execute(sql)
+    result = cur.fetchall()
+    term_occur = {}
+    for row in result:
+        term = row['term']
+        docu = row['title']
+        count = row['count']
+        if term in term_occur:
+            term_occur[term] += f',{docu}:{count}'
+        else:
+            term_occur[term] = f'{docu}:{count}'
 
-    # Query the database to return the documents where each term occurs with their corresponding count. Output example:
-    # {'baseball':'Exercise:1','summer':'Exercise:1,California:1,Arizona:1','months':'Exercise:1,Discovery:3'}
-    # ...
-    # --> add your Python code here
+    for term, occurrences in term_occur.items():
+        print(f"'{term}':'{occurrences}'")
