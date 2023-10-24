@@ -46,7 +46,7 @@ def createDocument(cur, docId, docText, docTitle, docDate, docCat):
     cstring = re.sub(r'[!.?\s]', '', string)
     numChars = len(cstring)
 
-    sql = "Insert into Documents (docNumber, text, title, numChars, date, id) Values (%s, %s, %s, %s, %s, %s)"
+    sql = "Insert into Documents (DocNumber, text, title, numChars, date, id) Values (%s, %s, %s, %s, %s, %s)"
     recset = [docId, docText, docTitle, numChars, docDate, id]
     cur.execute(sql, recset)
 
@@ -71,13 +71,13 @@ def createDocument(cur, docId, docText, docTitle, docDate, docCat):
     for term, count in tc.items():
         newTerm = term
         newCount = count
-        sql = 'Insert into Index (docNumber, term, count) Values (%s, %s, %s)'
+        sql = 'Insert into Index (DocNumber, term, count) Values (%s, %s, %s)'
         recset = [docId, newTerm, newCount]
         cur.execute(sql, recset)
 
 
 def deleteDocument(cur, docId):
-    sql = 'Select term from Index where docNumber = %s'
+    sql = 'Select term from Index where DocNumber = %s'
     recset = [docId]
     cur.execute(sql, recset)
     test = cur.fetchall()
@@ -87,7 +87,7 @@ def deleteDocument(cur, docId):
         recset = [delete_term]
         cur.execute(sql2, recset)
 
-    sql = "Delete from Documents where docNumber = %(docId)s"
+    sql = "Delete from Documents where DocNumber = %(docId)s"
     cur.execute(sql, {'docId': docId})
 
 
@@ -98,8 +98,8 @@ def updateDocument(cur, docId, docText, docTitle, docDate, docCat):
 
 
 def getIndex(cur):
-    sql = 'SELECT Index.term, Documents.title, count(*) AS count FROM Index INNER JOIN Documents ON Index.docNumber = ' \
-          'Documents.docNumber GROUP BY term, title'
+    sql = 'SELECT Index.term, Documents.title, count(*) AS count FROM Index INNER JOIN Documents ON Index.DocNumber = ' \
+          'Documents.DocNumber GROUP BY term, title'
     cur.execute(sql)
     result = cur.fetchall()
     term_occur = {}
