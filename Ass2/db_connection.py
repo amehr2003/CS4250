@@ -46,7 +46,7 @@ def createDocument(cur, docId, docText, docTitle, docDate, docCat):
     cstring = re.sub(r'[!.?\s]', '', string)
     numChars = len(cstring)
 
-    sql = "Insert into Documents (docnum, text, title, numChars, date, category_id) Values (%s, %s, %s, %s, %s, %s)"
+    sql = "Insert into Documents (docNumber, text, title, numChars, date, id) Values (%s, %s, %s, %s, %s, %s)"
     recset = [docId, docText, docTitle, numChars, docDate, id]
     cur.execute(sql, recset)
 
@@ -61,7 +61,6 @@ def createDocument(cur, docId, docText, docTitle, docDate, docCat):
             sql2 = 'Insert into terms (term, numChars) Values (%s, %s)'
             recset = [i, num_charTerm]
             cur.execute(sql2, recset)
-            
     tc = {}
     for word in newTerm:
         if word in tc:
