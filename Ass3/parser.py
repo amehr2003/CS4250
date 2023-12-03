@@ -5,18 +5,9 @@ import pymongo
 import sys, traceback
 import datetime
 
-def connectDataBase():
-    try:
-        client = pymongo.MongoClient(host="localhost", port=27017)
-        db = client.ass3
-        return db
-    except Exception as error:
-        traceback.print_exc()
-        print("Database not connected successfully")
-
 def saveToDB(db, pName, pTitle, pOffice, pPhone, pEmail, pWeb):
     try:
-        col = db.faculties
+        col = db.cppFaculty
         if pName != '':
             doc = {
                 "name": pName,
@@ -27,7 +18,6 @@ def saveToDB(db, pName, pTitle, pOffice, pPhone, pEmail, pWeb):
                 "web": pWeb
             }
             result = col.insert_one(doc)
-            print(result.inserted_id, ' has been Stored')
         return True
     except Exception as error:
         print("database error")
@@ -37,10 +27,7 @@ def cleansing_list(input):
     # elements to remove
     rm = ['Title:', 'Title', 'Office:', 'Office', 'Phone:', 'Phone', 'Email:', 'Email', 'Web:', 'Web', ':', ':']
     for x in range(0, len(rm)):
-        try:
-            input.remove(rm[x])
-        except Exception as error:
-            print('Skip Remove')
+        input.remove(rm[x])
     return input
 
 def getTargetPage(db):
@@ -51,12 +38,22 @@ def getTargetPage(db):
         ]
 
         docs = col.aggregate(pipeline)
-        for data in docs:
-            html_source = data['html']
+        for x in docs:
+            html_source = x['html']
             print(html_source)
         return html_source
     except Exception as error:
-        print("Mongo DB Error")
+        print("database error")
+        return None
+
+def connectDataBase():
+    try:
+        client = pymongo.MongoClient(host="localhost", port=27017)
+        db = client.ass3
+        return db
+    except Exception as error:
+        traceback.print_exc()
+        print("Database not connected successfully")
         return None
 
 seed = 'https://www.cpp.edu'
