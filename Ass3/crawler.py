@@ -25,7 +25,7 @@ def crawlPage(frontier):
             print(innerLink)
 
             if innerLink in frontier_list:
-                print("Already visited page. ")
+                print("Already visited.")
             else:
                 if innerLink.startswith('/sci/computer-science/'):
                     string=seed+innerLink
@@ -44,7 +44,7 @@ def crawlPage(frontier):
 
 def saveToDB(innerLink, title):
     db=connectDataBase()
-    col = db.cppPages
+    col = db.cppFaculties
     create_date=datetime.datetime.now()
 
     if innerLink.startswith("/sci/computer-science/"):
@@ -59,10 +59,10 @@ def saveToDB(innerLink, title):
     doc={
         "url": string,
         "title": title,
-        "html": str(html),
+        "html": str(text),
         "created": create_date
     }
-
+    result = col.insert_one(doc)
 
 def getPageTitle(innerLink):
     if innerLink.startswith('/sci/computer-science/'):
@@ -83,7 +83,7 @@ def getPageTitle(innerLink):
 def connectDataBase():
     try:
         client = pymongo.MongoClient(host="localhost", port=27017)
-        db = client.pages
+        db = client.ass3
         print("Database: ")
         print(db)
         return db
